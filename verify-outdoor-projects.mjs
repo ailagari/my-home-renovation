@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {defaultProject,allRooms,roomById,configureRooms,calculate,makePoint,clampPoint,worldPoint,setConnection} from './studio-data.js?v=20260913-outdoor-projects-2';
+import {areaSurfaces,mountSurface,mountPosition,mountWarnings} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
+import {setEmergency,emergencyGroup,emergencyWatts,assignSwitchLoads,switchChoice} from './power-controls.js?v=20260913-outdoor-projects-2';
+import {drawing,pointRows,pointHeaders,engineerPack} from './electrical-report.js?v=20260913-outdoor-projects-2';
+import {floorElevation,houseBounds,validateLevels,validateHouseModel} from './project-geometry.js?v=20260913-outdoor-projects-2';
+import {saveProject,loadProject,listProjects} from './project-store.js?v=20260913-outdoor-projects-2';
+
+const p=defaultProject(),baseline=calculate(p).connectedLoad;
+assert.equal(areaSurfaces('g-exterior',p).length,9);assert.equal(areaSurfaces('f-exterior',p).length,13);assert.equal(areaSurfaces('g-compound',p).length,8);
+const light=clampPoint(makePoint('outdoorlight','g-compound',{id:'TEST-WALL',surface:'boundary-front-right-inside',u:2,height:1.8}),p);
+const camera=clampPoint(makePoint('camera','f-exterior',{id:'TEST-CAM',surface:'outer-1-16',u:1,height:2.5}),p);
+p.points.push(light,camera);let stats=calculate(p);
+assert.equal(stats.routes.find(r=>r.id===light.id).sourceId,p.dbIds[0]);assert.equal(stats.routes.find(r=>r.id===camera.id).sourceId,p.rackId);
+assert.equal(worldPoint(camera,p)[1],5.5);assert.equal(stats.connectedLoad,baseline+24);
+const old=worldPoint(light,p),oldLength=stats.routes.find(r=>r.id===light.id).length;
+p.compound={front:7,height:1.5};clampPoint(light,p);stats=calculate(p);
+assert.equal(worldPoint(light,p)[2],old[2]+2);assert.equal(light.height,1.45);assert.notEqual(stats.routes.find(r=>r.id===light.id).length,oldLength);
+const inside=mountSurface(light,p),outside=areaSurfaces('g-compound',p).find(s=>s.id==='boundary-front-right-outside');assert.equal(inside.normal[1],-outside.normal[1]);
+const left=areaSurfaces('g-compound',p).find(s=>s.id==='boundary-front-left-inside');assert.ok(left.end[0]<inside.start[0]);
+const windowFace=areaSurfaces('g-exterior',p).find(s=>s.openings.length),opening=windowFace.openings[0],windowPoint=makePoint('outdoorlight','g-exterior',{id:'TEST-WINDOW',surface:windowFace.id,u:(opening.from+opening.to)/2,height:1.5});
+assert.ok(mountWarnings([windowPoint],p).some(w=>w.includes('window')));
+const elevation=drawing(p,stats,{floor:0,roomId:'g-compound',surface:light.surface,kind:'wall'});assert.ok(elevation.includes('1.50 m high'));assert.ok(elevation.includes(light.tag));assert.ok(!elevation.includes('NaN'));
+assert.equal(pointRows(p,stats)[0].length,pointHeaders.length);assert.ok(engineerPack(p,stats,stats.bom).includes('World x m'));
+
+const s1=makePoint('switch','g-living',{id:'TEST-SW1'}),s2=makePoint('switch','g-living',{id:'TEST-SW2'}),l1=makePoint('downlight','g-living',{id:'TEST-L1',watts:10,inverter:false}),l2=makePoint('downlight','g-living',{id:'TEST-L2',watts:15,inverter:false});
+p.points.push(s1,s2,l1,l2);assignSwitchLoads(p,s1.id,[l1.id,l2.id],true);setConnection(p,s2.id,l1.id,true);
+const before=calculate(p).connectedEssential;setEmergency(p,l1.id,true);assert.equal(calculate(p).connectedEssential,before+25);assert.equal(emergencyGroup(p,l2.id).length,4);assert.ok(l1.inverter&&l2.inverter);
+const heavy=makePoint('ac','g-living',{id:'TEST-AC'});p.points.push(heavy);assert.ok(switchChoice(p,s1.id,heavy).reason);assert.throws(()=>assignSwitchLoads(p,s1.id,[heavy.id],true));
+const upstairs=makePoint('switch','f-living',{id:'TEST-UP'});p.points.push(upstairs);assert.throws(()=>setConnection(p,upstairs.id,l1.id,true));
+const rack=p.points.find(q=>q.id===p.rackId),poe=p.points.filter(q=>['camera','ap','intercom'].includes(q.type)).reduce((n,q)=>n+q.watts*q.qty,0);assert.equal(emergencyWatts(p,rack),rack.watts*rack.qty+poe);
+
+const custom={...defaultProject(),projectId:'custom-test',name:'Imported house',points:[],dbIds:[null,null],rackId:null,connections:[],levels:validateLevels([{name:'Ground',elevation:0,clearHeight:3.14},{name:'First',elevation:3.3,clearHeight:2.9}]),houseModel:{assetId:'M-00000000-0000-4000-8000-000000000001',name:'Reference house',format:'glb',dimensions:[8,6,10],scale:1,angle:0,offsetX:0,offsetY:0,offsetZ:0,opacity:.7}};
+validateHouseModel(custom.houseModel);configureRooms(custom);assert.equal(allRooms.length,2);assert.equal(roomById['g-custom'].dim[0],8);assert.equal(houseBounds(custom.houseModel).x,-4);
+const board=clampPoint(makePoint('db3p','f-custom',{id:'CUSTOM-DB',surface:'mesh',normal:[1,0,0],u:1,v:1,height:1.5}),custom),lamp=clampPoint(makePoint('downlight','f-custom',{id:'CUSTOM-LAMP',surface:'ceiling',u:2,v:2,height:2.9,watts:12}),custom);custom.points.push(board,lamp);custom.dbIds[1]=board.id;stats=calculate(custom);
+assert.ok(Math.abs(worldPoint(lamp,custom)[1]-6.2)<1e-9);assert.equal(stats.routes.find(r=>r.id===lamp.id).sourceId,board.id);assert.ok(Math.abs(stats.routes.find(r=>r.id===lamp.id).points.at(-1)[1]-6.2)<1e-9);assert.equal(floorElevation(custom,1),3.3);
+custom.levels[1].elevation=3.6;assert.equal(calculate(custom).routes.find(r=>r.id===lamp.id).points.at(-1)[1],6.5);assert.ok(!drawing(custom,calculate(custom),{floor:1}).includes('NaN'));
+assert.throws(()=>validateLevels([{name:'G',elevation:0,clearHeight:2.84},{name:'F',elevation:1,clearHeight:2.84}]));
+globalThis.localStorage={data:new Map(),getItem(k){return this.data.get(k)||null;},setItem(k,v){this.data.set(k,v);}};
+p.projectId='original-test';p.name='Original';saveProject(p);saveProject(custom);assert.equal(listProjects().length,2);assert.equal(loadProject('original-test').points.length,p.points.length);assert.equal(loadProject('custom-test').houseModel.assetId,custom.houseModel.assetId);
+configureRooms(p);assert.ok(roomById['g-living']);assert.equal(defaultProject().points.length,162);
+console.log('PASS: exterior/compound mounting, gate gap, window warnings, wall elevations, DB/rack routing, inverter groups, switch compatibility, custom model bounds/levels, and isolated saved projects.');

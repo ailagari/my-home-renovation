@@ -1,4 +1,4 @@
-import {rooms} from './data.js?v=20260913-layout-2';
+import {rooms} from './data.js?v=20260913-outdoor-projects-2';
 
 const roomMap=Object.fromEntries(rooms.flat().map(r=>[r.id,{...r,floor:r.id.startsWith('f-')?1:0}]));
 export const furnitureCatalog=[];

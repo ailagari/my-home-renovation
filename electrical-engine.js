@@ -1,4 +1,6 @@
-import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint} from './studio-data.js?v=20260913-layout-2';
+import {floorElevation,floorClearHeight,houseBounds} from './project-geometry.js?v=20260913-outdoor-projects-2';
+import {mountWarnings} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
+import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint,configureRooms} from './studio-data.js?v=20260913-outdoor-projects-2';
 
 export const isBoard=p=>['db1p','db3p'].includes(p?.type);
 export const isSource=p=>isBoard(p)||p?.type==='rack';
@@ -10,7 +12,7 @@ export function ensureDesign(p){
   if(!p.designVersion){
     const locate=(type,f,xyz,id,label)=>{
       const [x,y,z]=xyz;
-      const candidates=allRooms.filter(r=>r.floor===f&&r.kind!=='site');
+      const candidates=allRooms.filter(r=>r.floor===f&&!['site','mount'].includes(r.kind));
       const room=candidates.find(r=>{const [a,b]=origin(r);return x>=a&&x<=a+r.dim[0]&&z>=b&&z<=b+r.dim[1];})||roomById[f?'f-living':'g-dining'];
       const [a,b]=origin(room),u=x-a,v=z-b;
       const sides=[['D',Math.abs(u)],['B',Math.abs(room.dim[0]-u)],['A',Math.abs(v)],['C',Math.abs(room.dim[1]-v)]].sort((a,b)=>a[1]-b[1]);
@@ -31,9 +33,9 @@ export function ensureDesign(p){
 }
 
 export function syncSources(project){
-  project.db=project.dbIds.map((id,f)=>{const p=project.points.find(q=>q.id===id&&isBoard(q)&&roomById[q.roomId].floor===f);if(!p)return project.db?.[f]||{x:4.25,z:6,height:1.5};const [x,,z]=worldPoint(p);return {x,z,height:p.height};});
+  project.db=project.dbIds.map((id,f)=>{const p=project.points.find(q=>q.id===id&&isBoard(q)&&roomById[q.roomId].floor===f);if(!p)return project.db?.[f]||{x:4.25,z:6,height:1.5};const [x,,z]=worldPoint(p,project);return {x,z,height:p.height};});
   const rack=project.points.find(p=>p.id===project.rackId&&p.type==='rack');
-  if(rack){const [x,,z]=worldPoint(rack);project.rack={x,z,height:rack.height,floor:roomById[rack.roomId].floor};}
+  if(rack){const [x,,z]=worldPoint(rack,project);project.rack={x,z,height:rack.height,floor:roomById[rack.roomId].floor};}
 }
 
 export function removePoint(project,id){
@@ -53,6 +55,7 @@ export function connectionError(project,links){
   for(const l of links){
     const sw=project.points.find(p=>p.id===l.switchId),load=project.points.find(p=>p.id===l.loadId),key=l.switchId+'|'+l.loadId;
     if(!isSwitch(sw)||!isLoad(load)||sw.id===load.id)return 'Choose an existing switch and a power load.';
+    if(roomById[sw.roomId].floor!==roomById[load.roomId].floor)return 'A switch must use the same floor DB as its load.';
     if(seen.has(key))return 'This switch is already linked to that load.';seen.add(key);
     const component=connectedLoads(project,links,load.id);
     const signature=p=>`${roomById[p.roomId].floor}/${p.inverter}/${byType[p.type].group==='dedicated'?p.id:byType[p.type].group}`;
@@ -66,16 +69,16 @@ export function setConnection(project,switchId,loadId,enabled){
   const error=connectionError(project,links);if(error)throw Error(error);
   project.connections=links;
 }
-export function orthogonalRoute(point,source){
-  const room=roomById[point.roomId],end=worldPoint(point),high=room.floor*3+2.65;
-  if(room.kind==='site')return [source,[source[0],2.65,source[2]],[4.25,2.65,source[2]],[4.25,2.65,12.85],[4.25,-.5,12.85],[4.25,-.5,end[2]],[end[0],-.5,end[2]],end];
-  return [source,[source[0],high,source[2]],[4.25,high,source[2]],[4.25,high,end[2]],[end[0],high,end[2]],end];
+export function orthogonalRoute(point,source,project){
+  const room=roomById[point.roomId],end=worldPoint(point,project),high=floorElevation(project,room.floor)+floorClearHeight(project,room.floor)-.19,spine=project?.houseModel?houseBounds(project.houseModel).x+houseBounds(project.houseModel).width/2:4.25;
+  if((room.kind==='site'||room.id==='g-compound'))return [source,[source[0],2.65,source[2]],[4.25,2.65,source[2]],[4.25,2.65,12.85],[4.25,-.5,12.85],[4.25,-.5,end[2]],[end[0],-.5,end[2]],end];
+  return [source,[source[0],high,source[2]],[spine,high,source[2]],[spine,high,end[2]],[end[0],high,end[2]],end];
 }
 
 export function calculate(project){
-  ensureDesign(project);syncSources(project);
+  configureRooms(project);ensureDesign(project);syncSources(project);
   const points=project.points,byId=new Map(points.map(p=>[p.id,p])),boards=project.dbIds.map((id,f)=>{const p=byId.get(id);return isBoard(p)&&roomById[p.roomId].floor===f?p:null;}),rack=byId.get(project.rackId);
-  const routes=[],groups=new Map(),bom=new Map(),phase={R:0,Y:0,B:0},warnings=[],unrouted=[];
+  const routes=[],groups=new Map(),bom=new Map(),phase={R:0,Y:0,B:0},warnings=mountWarnings(project.points,project).concat(project.houseModel?['Imported geometry is a visual reference. Automatic routes do not check lintels, beams, voids or structural clashes.']:[]),unrouted=[];
   const item=(name,qty,unit,note)=>{const entry=bom.get(name)||{name,qty:0,unit,note};entry.qty+=qty;bom.set(name,entry);};
   let wiring=0,conduit=0,dataCable=0,dataConduit=0,spareConduit=0,switchWire=0,controlConduit=0,load=0,essential=0,feeder=0;
   const parent=new Map();const find=x=>{if(!parent.has(x))parent.set(x,x);if(parent.get(x)!==x)parent.set(x,find(parent.get(x)));return parent.get(x);};
@@ -97,7 +100,7 @@ export function calculate(project){
     let source=low&&rack?.type==='rack'?rack:low?null:boards[f];
     if(['speaker','avpath'].includes(t.group))source=points.find(q=>q.roomId===p.roomId&&q.type==='av')||source;
     if(!source){unrouted.push(p.id);continue;}
-    const path=orthogonalRoute(p,worldPoint(source)),length=routeLength(path);
+    const path=orthogonalRoute(p,worldPoint(source,project),project),length=routeLength(path);
     const route={id:p.id,pointId:p.id,sourceId:source.id,floor:f,points:path,length,domain:low?'data':reserve?'reserve':p.inverter?'essential':'power'};routes.push(route);
     if(low){
       dataConduit+=length;
@@ -116,7 +119,7 @@ export function calculate(project){
   const controls=[];
   for(const l of project.connections){
     const sw=byId.get(l.switchId),p=byId.get(l.loadId);if(!isSwitch(sw)||!isLoad(p))continue;
-    const path=orthogonalRoute(p,worldPoint(sw)),length=routeLength(path),c=cs.find(c=>c.points.includes(p.id));
+    const path=orthogonalRoute(p,worldPoint(sw,project),project),length=routeLength(path),c=cs.find(c=>c.points.includes(p.id));
     const row={...l,switchName:sw.label,loadName:p.label,circuitId:c?.id||'UNROUTED',sourceId:c?.sourceId||'',length,multiway:project.connections.filter(q=>q.loadId===p.id).length>1};controls.push(row);
     if(linkError)continue;
     routes.push({id:`CTRL-${sw.id}-${p.id}`,pointId:p.id,sourceId:sw.id,floor:roomById[p.roomId].floor,points:path,length,domain:'control'});
@@ -135,7 +138,7 @@ export function calculate(project){
   const loadByFloor=[0,1].map(f=>connectedPoints.filter(p=>roomById[p.roomId].floor===f).reduce((s,p)=>s+p.watts*p.qty,0));
   if(boards[0]?.type==='db1p'&&boards[1]?.type==='db3p')warnings.push('A single-phase ground DB cannot provide the proposed three-phase upper DB feed. Feeder quantities are excluded; choose a compatible supply architecture.');
   if(boards.every(Boolean)&&!(boards[0].type==='db1p'&&boards[1].type==='db3p')){
-    const start=worldPoint(boards[0]),end=worldPoint(boards[1]),path=[start,[start[0],end[1],start[2]],[end[0],end[1],start[2]],end];feeder=routeLength(path)+2;
+    const start=worldPoint(boards[0],project),end=worldPoint(boards[1],project),path=[start,[start[0],end[1],start[2]],[end[0],end[1],start[2]],end];feeder=routeLength(path)+2;
     routes.push({id:'DB-FEEDER',pointId:boards[1].id,sourceId:boards[0].id,floor:1,points:path,length:feeder-2,domain:'feeder'});
     item('Upper DB feeder conductor allowance',feeder*(boards[1].type==='db1p'?3:5)*factor,'m','Independent feeder concept: 1P+N+PE or 3P+N+PE. Backup source feed and protection design excluded.');
     item('Upper DB feeder conduit allowance',feeder*factor,'m','Separate from final point routes; proposed supply from ground DB to first-floor DB.');

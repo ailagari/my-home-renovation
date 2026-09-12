@@ -5,6 +5,9 @@ This release includes furniture placement and orientation, local model imports,
 compound controls and live quantities. Imported files and design edits remain
 in your browser unless you export and share them yourself.
 
+For exterior mounting, inverter selection, switch checklists and separate
+projects using whole-house models, see [OUTDOOR_PROJECTS.md](OUTDOOR_PROJECTS.md).
+
 ## Move and orient furniture
 
 1. Select a room, then use **Move furniture** or the **Select furniture** list.
@@ -58,7 +61,8 @@ dimensions automatically save in this browser when an edit is committed or
 a drag is released. Model files are also stored locally in the browser.
 Watch the save-status text: unavailable or full storage requires an export.
 
-**Export project** includes the design and the original imported model files.
+**Export project** prepares a backup including the design and the original
+imported model files. Choose **Save project JSON** in the backup dialog.
 **Import** restores both. Model bundles are limited to 120 MB before encoding;
 project imports accept up to 180 MB. Clearing browser/site data can remove
 saved work, so keep exported backups. Localhost, GitHub Pages, other browsers
@@ -94,7 +98,8 @@ Three boundary sides are shown; the rear boundary has not been measured.
 The BOM lists net wall length, finish area on two faces and gate face area.
 These are concept allowances, excluding foundations, piers, coping and waste.
 Gate runback and actual plot dimensions need site verification. Changing the
-wall does not move previously placed outdoor service points.
+wall moves points bound to its new named mounting faces. Previously placed
+unbound outdoor service points retain their positions until assigned to a face.
 
 ## Verification
 

@@ -26,6 +26,15 @@ the model and material allowances. Furniture, model placement and equipment
 changes save in this browser; project exports include imported model files.
 See [LAYOUT_AND_MODELS.md](LAYOUT_AND_MODELS.md) for controls and format limits.
 
+Place equipment on exterior house walls and both faces of compound walls.
+Use **06 · Inverter & switches** to choose emergency equipment and assign
+compatible loads to switches through searchable checklists. **07 · Projects &
+house model** saves separate projects and imports whole-house models with
+editable floor levels and placement on actual mesh faces. Model details such
+as lintels remain visible when they exist in the supplied file. Two electrical
+floors are supported. See [OUTDOOR_PROJECTS.md](OUTDOOR_PROJECTS.md) for the
+workflow, portable backups and model limits.
+
 Open the [live design studio](https://ailagari.github.io/my-home-renovation/studio.html).
 
 Open `index.html` through a web server for the review, or `studio.html` for
@@ -55,11 +64,14 @@ sources and incompatible supply arrangements are flagged in the outputs.
 
 ## Verification
 
-Run `node verify-studio.mjs`, `node verify-electrical-overview.mjs` and
-`node verify-layout-tools.mjs` to check source routing, phase assignment,
+Run `node verify-studio.mjs`, `node verify-electrical-overview.mjs`,
+`node verify-layout-tools.mjs` and `node verify-outdoor-projects.mjs`
+to check source routing, phase assignment,
 network runs, switch links, estimates, migration, generated schedules,
 floor-overview coverage, furniture transforms, compound quantities and model
-parsing. Generated cube models for these checks are included in `test-fixtures`.
+parsing, exterior mounting, emergency control groups, custom floor levels and
+independent project storage. Generated cube models for these checks are
+included in `test-fixtures`.
 
 ## Maintenance
 

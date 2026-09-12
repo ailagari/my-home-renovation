@@ -10,10 +10,10 @@ export function pointsInView(points,mode,roomId,rooms,types){
 }
 export function floorOffset(floor,o){
   if(o.scope!=='all')return [0,0,0];
-  if(o.floorLayout==='side-by-side')return [floor*13,0,0];
+  if(o.floorLayout==='side-by-side'){const m=o.houseModel||o.project?.houseModel,a=(m?.angle||0)*Math.PI/180,spacing=m?(Math.abs(m.dimensions[0]*Math.cos(a))+Math.abs(m.dimensions[2]*Math.sin(a)))*m.scale+4:13;return [floor*spacing,0,0];}
   return [0,o.floorOffsets?.[floor]??(floor?(o.heights?.[0]??3)+(o.explode&&(!o.view||o.view==='cutaway')?2.5:0):0),0];
 }
 export function displayPosition(position,floor,o){
   const offset=floorOffset(floor,o);
-  return [position[0]+offset[0],position[1]-floor*3+offset[1],position[2]+offset[2]];
+  return [position[0]+offset[0],position[1]-(o.levels?.[floor]?.elevation??floor*3)+offset[1],position[2]+offset[2]];
 }

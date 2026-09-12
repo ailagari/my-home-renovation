@@ -1,0 +1,7 @@
+const KEY='myhome-project-library-v1';
+function read(){const raw=localStorage.getItem(KEY);if(!raw)return [];const list=JSON.parse(raw);if(!Array.isArray(list))throw Error('Project library is invalid; export the current project.');return list;}
+export function projectIdentity(project){project.projectId??=crypto.randomUUID();project.name??='My home';if(typeof project.projectId!=='string'||!/^[a-zA-Z0-9_-]{1,100}$/.test(project.projectId)||typeof project.name!=='string'||project.name.length>120)throw Error('Invalid project name or ID.');return project;}
+export function saveProject(project){projectIdentity(project);const list=read(),item={id:project.projectId,name:project.name,updated:new Date().toISOString(),project:JSON.parse(JSON.stringify(project))},index=list.findIndex(p=>p.id===item.id);if(index<0)list.push(item);else list[index]={...item,archived:list[index].archived};localStorage.setItem(KEY,JSON.stringify(list));}
+export const listProjects=(includeArchived=false)=>read().filter(p=>includeArchived||!p.archived).map(({id,name,updated,archived})=>({id,name,updated,archived}));
+export function archiveProject(id,archived=true){const list=read(),item=list.find(p=>p.id===id);if(!item)throw Error('Project was not found.');item.archived=archived;localStorage.setItem(KEY,JSON.stringify(list));}
+export function loadProject(id){const item=read().find(p=>p.id===id);if(!item)throw Error('Saved project was not found.');return item.project;}

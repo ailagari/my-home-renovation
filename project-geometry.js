@@ -1,0 +1,10 @@
+export const floorElevation=(project,floor)=>project?.levels?.[floor]?.elevation??floor*3;
+export const floorClearHeight=(project,floor)=>project?.levels?.[floor]?.clearHeight??2.84;
+export function validateLevels(value){
+ const levels=value??[{name:'Ground floor',elevation:0,clearHeight:2.84},{name:'First floor',elevation:3,clearHeight:2.84}];
+ if(!Array.isArray(levels)||levels.length!==2||levels.some(l=>!l||typeof l.name!=='string'||l.name.length>80||!Number.isFinite(l.elevation)||!Number.isFinite(l.clearHeight)||l.clearHeight<1.8||l.clearHeight>8)||levels[0].elevation!==0||levels[1].elevation<2||levels[1].elevation>10||levels[0].clearHeight>levels[1].elevation)throw Error('Set ground level to 0 m, first floor between 2 and 10 m, and valid clear heights.');
+ return levels.map(l=>({...l}));
+}
+export function houseBounds(model){const w=model.dimensions[0]*model.scale,d=model.dimensions[2]*model.scale,a=model.angle*Math.PI/180,width=Math.abs(w*Math.cos(a))+Math.abs(d*Math.sin(a)),depth=Math.abs(d*Math.cos(a))+Math.abs(w*Math.sin(a));return {x:(model.offsetX??0)-width/2,z:(model.offsetZ??0)-depth/2,width,depth};}
+export function customRooms(project){if(!project.houseModel)return null;const b=houseBounds(project.houseModel);return [0,1].map(f=>({id:f?'f-custom':'g-custom',floor:f,name:project.levels?.[f]?.name||(f?'First floor':'Ground floor'),kind:'custom',dim:[b.width,b.depth],worldOrigin:[b.x,b.z],rect:[(f?67:44)+b.x*74,40+b.z*74,b.width*74,b.depth*74]}));}
+export function validateHouseModel(model){if(!model)return;for(const key of ['offsetX','offsetY','offsetZ'])if(!Number.isFinite(model[key])||Math.abs(model[key])>500)throw Error('Enter valid model alignment offsets.');if(!Number.isFinite(model.opacity)||model.opacity<.05||model.opacity>1)throw Error('House visibility must be 5–100%.');const bounds=houseBounds(model);if(bounds.width<.5||bounds.depth<.5||bounds.width>100||bounds.depth>100)throw Error('House dimensions must be between 0.5 and 100 m. Check file units.');}

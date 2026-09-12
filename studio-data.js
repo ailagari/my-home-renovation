@@ -1,7 +1,9 @@
-import {rooms,meta} from './data.js?v=20260913-layout-2';
-import {allElectrical} from './room-electrical.js?v=20260913-layout-2';
-import {ensureDesign} from './electrical-engine.js?v=20260913-layout-2';
-export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js?v=20260913-layout-2';
+import {customRooms,floorElevation,floorClearHeight} from './project-geometry.js?v=20260913-outdoor-projects-2';
+import {mountingAreas,isMountArea,clampMount,mountPosition} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
+import {rooms,meta} from './data.js?v=20260913-outdoor-projects-2';
+import {allElectrical} from './room-electrical.js?v=20260913-outdoor-projects-2';
+import {ensureDesign} from './electrical-engine.js?v=20260913-outdoor-projects-2';
+export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js?v=20260913-outdoor-projects-2';
 export const library=[
  ['model','Imported furniture / decor','Models',0,'floor',.02,'model'],
  ['socket16','16A socket','Power',0,'B',.45,'dedicated'],['socket13','13A socket','Power',0,'B',.45,'general'],['appliance16','16A appliance','Appliances',2000,'B',.65,'dedicated'],['appliance13','13A appliance','Appliances',1000,'B',.65,'dedicated'],
@@ -16,16 +18,18 @@ export const library=[
  ['cold','Cold-water connection','Plumbing',0,'B',.60,'plumbing'],['hot','Hot-water connection','Plumbing',0,'B',.60,'plumbing'],['waste','Trapped waste connection','Plumbing',0,'B',.30,'plumbing'],['valve','Accessible isolation valve','Plumbing',0,'B',.60,'plumbing'],['leak','Leak sensor provision','Plumbing',2,'floor',.02,'control']
 ].map(([id,name,category,watts,surface,height,group])=>({id,name,category,watts,surface,height,group}));
 export const byType=Object.fromEntries(library.map(t=>[t.id,t]));
-export const allRooms=[...rooms.flat().map(r=>({...r,floor:r.id[0]==='g'?0:1})),...[[ 'g-court','Front court (approx.)',[-1,12.85],[10.6,5]],['g-side-left','Left side passage',[-1,0],[1,12.85]],['g-side-right','Right side passage',[8.6,0],[1,12.85]]].map(([id,name,pos,dim])=>({id,name,floor:0,dim,rect:[44+pos[0]*74,40+pos[1]*74,dim[0]*74,dim[1]*74],kind:'site'}))];
+export const allRooms=[...rooms.flat().map(r=>({...r,floor:r.id[0]==='g'?0:1})),...[[ 'g-court','Front court (approx.)',[-1,12.85],[10.6,5]],['g-side-left','Left side passage',[-1,0],[1,12.85]],['g-side-right','Right side passage',[8.6,0],[1,12.85]]].map(([id,name,pos,dim])=>({id,name,floor:0,dim,rect:[44+pos[0]*74,40+pos[1]*74,dim[0]*74,dim[1]*74],kind:'site'})),...mountingAreas];
 export const roomById=Object.fromEntries(allRooms.map(r=>[r.id,r]));
-export function origin(r){return [(r.rect[0]-meta.origin[r.floor][0])/meta.scale,(r.rect[1]-meta.origin[r.floor][1])/meta.scale]}
+const originalRooms=allRooms.slice();
+export function configureRooms(project){const rooms=customRooms(project)||originalRooms;allRooms.splice(0,allRooms.length,...rooms);for(const id of Object.keys(roomById))delete roomById[id];Object.assign(roomById,Object.fromEntries(allRooms.map(r=>[r.id,r])));}
+export function origin(r){if(r.worldOrigin)return r.worldOrigin;return [(r.rect[0]-meta.origin[r.floor][0])/meta.scale,(r.rect[1]-meta.origin[r.floor][1])/meta.scale]}
 let serial=Date.now();
 export function makePoint(type,roomId,patch={}){const r=roomById[roomId],t=byType[type];return {id:`P${++serial}`,type,roomId,u:r.dim[0]/2,v:r.dim[1]/2,height:t.height,surface:t.surface,watts:t.watts,qty:1,inverter:['downlight','fan','night','sconce','pc','rj45','ap','camera','projector','av'].includes(type),label:t.name,...patch};}
-export function clampPoint(p){const r=roomById[p.roomId];p.u=Math.max(.05,Math.min(r.dim[0]-.05,+p.u||.05));p.v=Math.max(.05,Math.min(r.dim[1]-.05,+p.v||.05));p.height=Math.max(0,Math.min(2.84,+p.height||0));if(p.surface==='A')p.v=.04;if(p.surface==='B')p.u=r.dim[0]-.04;if(p.surface==='C')p.v=r.dim[1]-.04;if(p.surface==='D')p.u=.04;if(p.surface==='ceiling')p.height=Math.max(2.5,p.height);if(p.surface==='floor')p.height=.02;return p;}
-export function defaultProject(){let points=[];const typeMap={AC:'ac',RJ:'rj45',F:'fan',L:'downlight',NL:'sconce',NR:'sconce',BS:'bedstation',SW:'switch',R:'curtain',TV:'tv','2S':'socket2'};
+export function clampPoint(p,project){if(isMountArea(p))return clampMount(p,project);const r=roomById[p.roomId];if(r.kind==='custom'&&p.surface==='mesh'){p.u=Math.max(0,Math.min(r.dim[0],+p.u||0));p.v=Math.max(0,Math.min(r.dim[1],+p.v||0));p.height=Math.max(0,Math.min(floorClearHeight(project,r.floor),+p.height||0));return p;}p.u=Math.max(.05,Math.min(r.dim[0]-.05,+p.u||.05));p.v=Math.max(.05,Math.min(r.dim[1]-.05,+p.v||.05));p.height=Math.max(0,Math.min(floorClearHeight(project,r.floor),+p.height||0));if(p.surface==='A')p.v=.04;if(p.surface==='B')p.u=r.dim[0]-.04;if(p.surface==='C')p.v=r.dim[1]-.04;if(p.surface==='D')p.u=.04;if(p.surface==='ceiling')p.height=Math.max(floorClearHeight(project,r.floor)-.34,p.height);if(p.surface==='floor')p.height=.02;return p;}
+export function defaultProject(){configureRooms({});let points=[];const typeMap={AC:'ac',RJ:'rj45',F:'fan',L:'downlight',NL:'sconce',NR:'sconce',BS:'bedstation',SW:'switch',R:'curtain',TV:'tv','2S':'socket2'};
  for(const f of [0,1])for(const p of allElectrical(f).filter(p=>p.offset)){const r=roomById[p.roomId];let type=typeMap[p.type]||'socket2';if(p.id.endsWith('-PC'))type='pc';if(p.id.endsWith('-N'))type='night';let surface=p.aff==='Ceiling'?'ceiling':p.id.match(/-(NL|NR|BL|BR)$/)?'C':p.offset[0]<.25?'D':p.offset[0]>r.dim[0]-.25?'B':p.offset[1]<.25?'A':'C';points.push(clampPoint(makePoint(type,r.id,{id:p.id,u:p.offset[0],v:p.offset[1],height:typeof p.aff==='number'?p.aff:2.84,surface,label:p.name})));}
  const add=(type,id,u,v,surface,height)=>points.push(clampPoint(makePoint(type,id,{u,v,surface,height})));
- for(const r of allRooms.filter(r=>!['bed','prayer','site'].includes(r.kind)&&!['g-living','f-living'].includes(r.id))){add(r.kind==='outdoor'?'outdoorlight':r.id==='g-dining'?'pendant':'downlight',r.id,r.dim[0]/2,r.dim[1]/2,'ceiling',2.84);if(r.kind==='wet'){add('exhaust',r.id,r.dim[0]-.3,.04,'A',2.3);add('heater',r.id,r.dim[0]-.04,.5,'B',2.1);add('cold',r.id,.04,.65,'D',.6);add('waste',r.id,.04,1.0,'D',.3);}}
+ for(const r of allRooms.filter(r=>!['bed','prayer','site','mount'].includes(r.kind)&&!['g-living','f-living'].includes(r.id))){add(r.kind==='outdoor'?'outdoorlight':r.id==='g-dining'?'pendant':'downlight',r.id,r.dim[0]/2,r.dim[1]/2,'ceiling',2.84);if(r.kind==='wet'){add('exhaust',r.id,r.dim[0]-.3,.04,'A',2.3);add('heater',r.id,r.dim[0]-.04,.5,'B',2.1);add('cold',r.id,.04,.65,'D',.6);add('waste',r.id,.04,1.0,'D',.3);}}
  for(const [type,u,v,s,h] of [['fridge',2.4,.4,'B',1.2],['hob',1.2,.04,'A',.65],['hood',1.2,.04,'A',2.1],['oven',1.8,.04,'A',.65],['dishwasher',.04,2.2,'D',.65],['purifier',.04,2.6,'D',1.3],['counter',2.58,1.5,'B',1.15],['strip',.04,1.3,'D',1.45],['cold',.04,2.6,'D',.6],['waste',.04,2.6,'D',.3]])add(type,'g-kitchen',u,v,s,h);
  add('washer','f-laundry',1.56,1.2,'B',1.15);add('dryer','f-laundry',1.56,.8,'B',1.15);add('cold','f-laundry',.04,1.2,'D',.6);add('waste','f-laundry',.04,1.2,'D',.3);
  add('projector','f-living',1.67,2.10,'ceiling',2.70);add('screen','f-living',1.67,.04,'A',2.45);add('hdmi','f-living',1.67,2.10,'ceiling',2.70);add('av','f-living',3.30,2.1,'B',.65);add('speaker','f-living',.35,.04,'A',1.8);add('speaker','f-living',2.95,.04,'A',1.8);
@@ -35,4 +39,4 @@ export function defaultProject(){let points=[];const typeMap={AC:'ac',RJ:'rj45',
  for(const [id,type,u,v,s,h] of [['g-court','camera',1,4.8,'C',1.8],['g-court','camera',9.5,4.8,'C',2],['g-side-left','camera',.5,11.8,'C',2.6],['g-side-right','camera',.5,11.8,'C',2.6],['g-court','gate',4.2,4.8,'C',.45],['g-court','intercom',.5,4.8,'C',1.4],['g-court','ev',8.5,4.8,'C',1.2],['g-court','outdoorlight',5.3,4.8,'C',1.8],['g-side-left','outdoorlight',.5,4,'D',1.8],['g-side-right','outdoorlight',.5,4,'B',1.8]])points.push(clampPoint(makePoint(type,id,{id:id+'-'+type+'-'+String(u).replace('.','_'),u,v,surface:s,height:h})));
  return ensureDesign({schema:1,seedVersion:3,points,db:[{x:4.45,z:5.43,height:1.5},{x:4.15,z:7.43,height:1.5}],rack:{x:4.04,z:5.14,height:1.5},waste:15,roomFinishes:{},feederCores:5});
 }
-export function worldPoint(p){const r=roomById[p.roomId],[x,z]=origin(r);return [x+p.u,r.floor*3+p.height,z+p.v];}
+export function worldPoint(p,project){if(isMountArea(p))return mountPosition(p,project);const r=roomById[p.roomId],[x,z]=origin(r);return [x+p.u,floorElevation(project,r.floor)+p.height,z+p.v];}

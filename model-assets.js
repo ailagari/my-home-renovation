@@ -69,14 +69,14 @@ export function ensureModelAssets(points,onReady,onError=()=>{}){
 function encode(bytes){const a=new Uint8Array(bytes);let s='';for(let i=0;i<a.length;i+=32768)s+=String.fromCharCode(...a.subarray(i,i+32768));return btoa(s);}
 function decode(text){const s=atob(text),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);return a.buffer;}
 export async function portableProject(project){
- const result=structuredClone(project),ids=[...new Set(project.points.map(p=>p.customModel?.assetId).filter(Boolean))];let total=0;result.assetBundle=[];
+ const result=structuredClone(project),ids=[...new Set([...project.points,{customModel:project.houseModel}].map(p=>p.customModel?.assetId).filter(Boolean))];let total=0;result.assetBundle=[];
  for(const id of ids){const record=await assetRecord(id);if(!record)throw Error('Cannot create a complete backup: a model file is missing from this browser.');total+=record.files.reduce((s,f)=>s+f.bytes.byteLength,0);if(total>MAX_BUNDLE)throw Error('The model backup exceeds 120 MB. Remove unused model placements or use simpler models.');result.assetBundle.push({...record,files:record.files.map(f=>({...f,bytes:undefined,base64:encode(f.bytes)}))});}
  return result;
 }
 export async function restoreModelBundle(project){
  const bundle=project.assetBundle;if(bundle===undefined)return;
  if(!Array.isArray(bundle)||bundle.length>100)throw Error('Invalid model backup');
- const ids=new Set(project.points.map(p=>p.customModel?.assetId).filter(Boolean)),records=[];let total=0;
+ const ids=new Set([...project.points,{customModel:project.houseModel}].map(p=>p.customModel?.assetId).filter(Boolean)),records=[];let total=0;
  for(const item of bundle){if(!ids.has(item.id)||!Array.isArray(item.files)||item.files.length>100||!['Y','Z'].includes(item.upAxis)||![1,.01,.001].includes(item.unitScale))throw Error('Invalid model backup');
   const files=item.files.map(f=>{if(typeof f.name!=='string'||f.name.length>250||typeof f.base64!=='string'||f.base64.length>MAX_ASSET*1.4)throw Error('Invalid model resource');const bytes=decode(f.base64);total+=bytes.byteLength;if(total>MAX_BUNDLE)throw Error('Model backup exceeds 120 MB');return {name:f.name,mime:typeof f.mime==='string'?f.mime:'',bytes};});
   records.push({id:item.id,main:item.main,unitScale:item.unitScale,upAxis:item.upAxis,files});
