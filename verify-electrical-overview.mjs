@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {defaultProject,calculate,roomById,byType,worldPoint} from './studio-data.js';
+import {pointsInView,coverageOptions,displayPosition,floorOffset} from './view-layout.js';
+
+const project=defaultProject(),quantities=JSON.stringify(calculate(project)),before=JSON.stringify(project);
+const shown=mode=>pointsInView(project.points,mode,'g-living',roomById,byType);
+assert.equal(shown('ground').length,87);
+assert.equal(shown('first').length,63);
+assert.equal(shown('all').length,150);
+assert.equal(shown('all').filter(p=>p.surface==='ceiling').length,47);
+assert.ok(shown('ground').some(p=>p.roomId==='g-court'));
+assert.ok(shown('ground').some(p=>p.roomId==='g-side-left'));
+assert.ok(shown('first').some(p=>p.type==='projector'));
+assert.ok(shown('first').every(p=>roomById[p.roomId].floor===1));
+assert.ok(shown('room').every(p=>p.roomId==='g-living'));
+assert.equal(new Set([...shown('ground'),...shown('first')].map(p=>p.id)).size,shown('all').length);
+
+const whole=coverageOptions('all',0),upper=shown('first').find(p=>p.type==='projector'),lower=shown('ground').find(p=>p.type==='ac');
+const upperActual=worldPoint(upper),upperDisplay=displayPosition(upperActual,1,whole);
+assert.equal(upperDisplay[0]-upperActual[0],13);
+assert.equal(upperDisplay[1],upper.height);
+assert.equal(upperDisplay[2],upperActual[2]);
+assert.deepEqual(displayPosition(worldPoint(lower),0,whole),worldPoint(lower));
+assert.deepEqual(displayPosition(upperActual,1,coverageOptions('first',0)),[upperActual[0],upper.height,upperActual[2]]);
+assert.deepEqual(floorOffset(1,{scope:'all',view:'cutaway',explode:true,heights:[3,3]}),[0,5.5,0]);
+assert.deepEqual(floorOffset(1,{scope:'all',view:'exterior',explode:true,heights:[3,3]}),[0,3,0]);
+assert.deepEqual(displayPosition(upperActual,1,{scope:'all',floorOffsets:[0,5.5]}),[upperActual[0],upper.height+5.5,upperActual[2]]);
+assert.equal(JSON.stringify(project),before,'Changing presentation must never move saved equipment');
+assert.equal(JSON.stringify(calculate(project)),quantities,'Presentation separation must never inflate route lengths or BOM');
+console.log('PASS: full-floor/house coverage, ceiling and outdoor points, separate floor display, existing exploded view and unchanged design/quantities.');

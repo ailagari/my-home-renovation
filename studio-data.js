@@ -1,8 +1,9 @@
-import {rooms,meta} from './data.js';
-import {allElectrical} from './room-electrical.js';
-import {ensureDesign} from './electrical-engine.js';
-export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js';
+import {rooms,meta} from './data.js?v=20260913-layout-2';
+import {allElectrical} from './room-electrical.js?v=20260913-layout-2';
+import {ensureDesign} from './electrical-engine.js?v=20260913-layout-2';
+export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js?v=20260913-layout-2';
 export const library=[
+ ['model','Imported furniture / decor','Models',0,'floor',.02,'model'],
  ['socket16','16A socket','Power',0,'B',.45,'dedicated'],['socket13','13A socket','Power',0,'B',.45,'general'],['appliance16','16A appliance','Appliances',2000,'B',.65,'dedicated'],['appliance13','13A appliance','Appliances',1000,'B',.65,'dedicated'],
  ['rj45single','RJ45 connector','Data',0,'B',1.05,'data'],['rack','Network rack','Infrastructure',60,'A',1.40,'dedicated'],['db1p','Single-phase power DB','Infrastructure',0,'A',1.50,'distribution'],['db3p','Three-phase power DB','Infrastructure',0,'A',1.50,'distribution'],
  ['socket2','Twin switched socket','Power',100,'C',.45,'general'],['socket1','Single switched socket','Power',100,'B',.45,'general'],['usb','USB-C charging socket','Power',65,'C',.75,'general'],['floorbox','Floor outlet box','Power',150,'floor',.02,'general'],

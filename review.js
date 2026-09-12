@@ -1,6 +1,6 @@
-import {circuits,checklist} from './data.js';
-import {roomRequirementRows} from './room-electrical.js';
-import {siteStudy,cameraSchedule} from './site-study.js';
+import {circuits,checklist} from './data.js?v=20260913-layout-2';
+import {roomRequirementRows} from './room-electrical.js?v=20260913-layout-2';
+import {siteStudy,cameraSchedule} from './site-study.js?v=20260913-layout-2';
 const box=(x,y,w,t,s,c='#122236')=>`<rect x="${x}" y="${y}" width="${w}" height="64" rx="7" fill="${c}"/><text x="${x+w/2}" y="${y+26}" text-anchor="middle" font-size="16" fill="white">${t}</text><text x="${x+w/2}" y="${y+47}" text-anchor="middle" font-size="12" fill="#dce9ee">${s}</text>`;
 const ar=(a,b,c,d)=>`<path d="M${a} ${b}L${c} ${d}" stroke="#698591" stroke-width="3" marker-end="url(#arr)"/>`;
 const start=h=>`<div class="schematicWrap"><svg class="schematic" viewBox="0 0 850 ${h}" aria-label="Conceptual system diagram"><defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0 0L7 3L0 6" fill="#698591"/></marker></defs>`;

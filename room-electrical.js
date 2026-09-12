@@ -1,4 +1,4 @@
-import {rooms,electrical,point} from './data.js';
+import {rooms,electrical,point} from './data.js?v=20260913-layout-2';
 // Explicit owner allocation: bedrooms, both living rooms, prayer room.
 // Proposed offsets from the room's rear-left inside corner; heights AFF are design proposals.
 const applicable=r=>r.kind==='bed'||['g-living','f-living','g-prayer'].includes(r.id);

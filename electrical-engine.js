@@ -1,4 +1,4 @@
-import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint} from './studio-data.js';
+import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint} from './studio-data.js?v=20260913-layout-2';
 
 export const isBoard=p=>['db1p','db3p'].includes(p?.type);
 export const isSource=p=>isBoard(p)||p?.type==='rack';
@@ -89,10 +89,10 @@ export function calculate(project){
   const poe=points.filter(p=>byType[p.type].group==='poe').reduce((sum,p)=>sum+p.watts*p.qty,0);
   for(const p of points){
     const t=byType[p.type],r=roomById[p.roomId],f=r.floor,n=p.qty;
-    item(t.name,n,'pcs',isSource(p)?'Generic reference enclosure; product dimensions, ports / ways and protection to specify.':p.label);
+    item(p.customModel?`${p.customModel.name} · ${t.name}`:t.name,n,'pcs',isSource(p)?'Generic reference enclosure; product dimensions, ports / ways and protection to specify.':p.label);
     if(['Power','Controls'].includes(t.category)&&p.surface!=='ceiling')item('Outlet / switch back box',n,'pcs','Final modules/depth, mounting and weather protection to specify.');
     if(isBoard(p))continue;
-    if(t.group==='plumbing'||t.group==='control')continue;
+    if(['plumbing','control','model'].includes(t.group))continue;
     const low=['data','poe','speaker','avpath'].includes(t.group),reserve=t.group==='reserve';
     let source=low&&rack?.type==='rack'?rack:low?null:boards[f];
     if(['speaker','avpath'].includes(t.group))source=points.find(q=>q.roomId===p.roomId&&q.type==='av')||source;
@@ -129,6 +129,10 @@ export function calculate(project){
   if(controls.length&&!project.controlCores)warnings.push('Switch connections are functional relationships. Control wire cores / two-way or relay topology are unassigned; control wire is excluded from the conductor total.');
   for(const p of points.filter(isSource))if(!project.dbIds.includes(p.id)&&p.id!==project.rackId)warnings.push(`${p.label} (${p.id}) is placed but is not an active ${p.type==='rack'?'data source. Its equipment power point is counted, but no data endpoints are assigned.':'floor DB. Its incoming feed is not designed.'}`);
   const factor=1+project.waste/100;
+  const connectedPoints=points.filter(p=>!isBoard(p)&&!['plumbing','data','speaker','avpath','reserve','model'].includes(byType[p.type].group));
+  const connectedLoad=connectedPoints.reduce((s,p)=>s+p.watts*p.qty,0);
+  const connectedEssential=connectedPoints.reduce((s,p)=>s+((byType[p.type].group==='poe'?rack?.inverter:p.inverter)?p.watts*p.qty:0),0);
+  const loadByFloor=[0,1].map(f=>connectedPoints.filter(p=>roomById[p.roomId].floor===f).reduce((s,p)=>s+p.watts*p.qty,0));
   if(boards[0]?.type==='db1p'&&boards[1]?.type==='db3p')warnings.push('A single-phase ground DB cannot provide the proposed three-phase upper DB feed. Feeder quantities are excluded; choose a compatible supply architecture.');
   if(boards.every(Boolean)&&!(boards[0].type==='db1p'&&boards[1].type==='db3p')){
     const start=worldPoint(boards[0]),end=worldPoint(boards[1]),path=[start,[start[0],end[1],start[2]],[end[0],end[1],start[2]],end];feeder=routeLength(path)+2;
@@ -143,5 +147,5 @@ export function calculate(project){
   item('Data / AV conduit allowance',dataConduit*factor,'m','Separate from mains; actual segregation/fill needs design.');
   item('Empty future conduit allowance',spareConduit*factor,'m','No cables counted for empty reserved routes.');
   item('Final circuit protective-device positions',cs.length,'positions','Proposed groups only; device type, poles, ratings and spare ways not assigned.');
-  return {routes,circuits:cs,controls,bom:[...bom.values()],phase,load,essential,warnings,unrouted,unresolved:warnings.length,raw:{wiring,switchWire,conduit:conduit+controlConduit,controlConduit,dataCable,dataConduit,spareConduit,feeder},excluded:'Incoming supply, inverter/solar transfer and source wiring, earthing/bonding, control terminal topology and unassigned control conductors, inactive source feeds, AC services, plumbing pipework, conduit fittings, supports and structural clash checks require measured professional design. Hardware ratings are labels, not proof of circuit capacity.'};
+  return {routes,circuits:cs,controls,bom:[...bom.values()],phase,load,essential,connectedLoad,connectedEssential,loadByFloor,warnings,unrouted,unresolved:warnings.length,raw:{wiring,switchWire,conduit:conduit+controlConduit,controlConduit,dataCable,dataConduit,spareConduit,feeder},excluded:'Incoming supply, inverter/solar transfer and source wiring, earthing/bonding, control terminal topology and unassigned control conductors, inactive source feeds, AC services, plumbing pipework, conduit fittings, supports and structural clash checks require measured professional design. Hardware ratings are labels, not proof of circuit capacity.'};
 }

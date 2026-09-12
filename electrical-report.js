@@ -1,4 +1,4 @@
-import {allRooms,roomById,byType,origin,worldPoint,isBoard,isSwitch} from './studio-data.js';
+import {allRooms,roomById,byType,origin,worldPoint,isBoard,isSwitch} from './studio-data.js?v=20260913-layout-2';
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tag=(p,id)=>p.points.find(q=>q.id===id)?.tag||'UNASSIGNED';
 const name=(p,id)=>p.points.find(q=>q.id===id)?.label||'No source';

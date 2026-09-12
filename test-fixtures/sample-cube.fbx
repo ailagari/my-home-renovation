@@ -1,0 +1,27 @@
+; FBX 7.4.0 project file
+FBXHeaderExtension:  {
+	FBXHeaderVersion: 1003
+	FBXVersion: 7400
+}
+Objects:  {
+	Geometry: 100, "Geometry::Cube", "Mesh" {
+		Vertices: *24 {
+			a: -0.5,0,-0.5,0.5,0,-0.5,0.5,1,-0.5,-0.5,1,-0.5,-0.5,0,0.5,0.5,0,0.5,0.5,1,0.5,-0.5,1,0.5
+		}
+		PolygonVertexIndex: *36 {
+			a: 0,2,-2,0,3,-3,4,5,-7,4,6,-8,0,1,-6,0,5,-5,3,7,-7,3,6,-3,0,4,-8,0,7,-4,1,2,-7,1,6,-6
+		}
+	}
+	Model: 200, "Model::Cube", "Mesh" {
+		Version: 232
+		Properties70:  {
+			P: "Lcl Translation", "Lcl Translation", "", "A",0,0,0
+			P: "Lcl Rotation", "Lcl Rotation", "", "A",0,0,0
+			P: "Lcl Scaling", "Lcl Scaling", "", "A",1,1,1
+		}
+	}
+}
+Connections:  {
+	C: "OO",100,200
+	C: "OO",200,0
+}

@@ -15,6 +15,19 @@ locations. Drawings, schedules and material estimates update with the design.
 Download SVG drawings, CSV schedules or the printable HTML engineer pack.
 See [VISUAL_EDITOR.md](VISUAL_EDITOR.md) for placement and export instructions.
 
+View all ground-floor, first-floor or whole-house electrical points together.
+Use **Move furniture** to drag built-in furniture, enter exact positions, rotate
+items or transfer them between rooms. Import named GLB/glTF, FBX, STL and OBJ
+models as furniture or electrical equipment, with editable size and orientation.
+
+The live load strip shows total connected watts, inverter-selected watts and
+floor totals. Compound-wall height, setbacks and sliding-gate settings update
+the model and material allowances. Furniture, model placement and equipment
+changes save in this browser; project exports include imported model files.
+See [LAYOUT_AND_MODELS.md](LAYOUT_AND_MODELS.md) for controls and format limits.
+
+Open the [live design studio](https://ailagari.github.io/my-home-renovation/studio.html).
+
 Open `index.html` through a web server for the review, or `studio.html` for
 the editable design studio. GitHub Pages serves this repository from
 `main` at the repository root. `.nojekyll` keeps the static files unchanged.
@@ -42,8 +55,11 @@ sources and incompatible supply arrangements are flagged in the outputs.
 
 ## Verification
 
-Run `node verify-visual-electrical.mjs` to check source routing, phase assignment,
-network runs, switch links, estimates, migration and generated schedules.
+Run `node verify-studio.mjs`, `node verify-electrical-overview.mjs` and
+`node verify-layout-tools.mjs` to check source routing, phase assignment,
+network runs, switch links, estimates, migration, generated schedules,
+floor-overview coverage, furniture transforms, compound quantities and model
+parsing. Generated cube models for these checks are included in `test-fixtures`.
 
 ## Maintenance
 
@@ -52,5 +68,5 @@ only through GitHub Pages. Pushes to main update this public website, so
 ordinary local edits must not be pushed automatically. Never upload chat
 transcripts, local server logs, credentials, or unrelated project files.
 
-Three.js and OrbitControls are bundled under their MIT license; see
-`vendor/THREE-LICENSE.txt`.
+Three.js, OrbitControls and the model loaders are bundled locally; see
+`vendor/THREE-LICENSE.txt` and `vendor/MODEL-LOADERS.md` for licenses and provenance.

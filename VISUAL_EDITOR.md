@@ -1,7 +1,28 @@
 # Visual electrical editor
 
-Open [the design studio](https://ailagari.github.io/my-home-renovation/studio.html).
-Edits stay in your browser; export project JSON to back up or transfer your design.
+Open the [design studio](https://ailagari.github.io/my-home-renovation/studio.html).
+This release includes floor and whole-house electrical overviews, furniture
+movement and orientation, local model imports, and compound controls.
+
+## See every electrical point together
+
+Furniture movement/orientation, local 3D-file imports, compound controls and
+the live connected-load strip are described in [LAYOUT_AND_MODELS.md](LAYOUT_AND_MODELS.md).
+
+Above the model, choose **Ground floor**, **First floor**, or **Whole house**.
+Each option fits all electrical and data points for that area, including
+ceiling fixtures. The ground-floor view includes the court and side passages.
+Whole house displays the floors side by side so neither hides the other.
+
+Use **Top** for the full layout, **Orbit** to inspect mounting heights,
+**Point tags** to show drawing references, and **Expand model** for more space.
+Coloured point markers remain visible through walls; the point list shows
+every electrical position included in the current view. Select a point to
+inspect it, then use **Selected room** or a placement tool to edit in detail.
+Plumbing-only provisions remain available in the room editor.
+
+Floor separation changes only the display. Saved positions, physical routes,
+drawings and BOM quantities are unchanged.
 
 ## Place hardware
 
@@ -95,7 +116,7 @@ The documents are for engineering coordination, not construction release.
 
 ## Verification
 
-Run `node verify-visual-electrical.mjs` from this repository.
+Run `node verify-studio.mjs` (delegates to verify-visual-electrical.mjs).
 Tests cover source routing by floor, DB phase selection, rack relocation,
 RJ45 run counts, PoE power accounting, many-to-many controls without load
 duplication, compatible circuit merging, rejected cross-supply links, deletion,
