@@ -12,7 +12,10 @@ the live connected-load strip are described in [LAYOUT_AND_MODELS.md](LAYOUT_AND
 Above the model, choose **Ground floor**, **First floor**, or **Whole house**.
 Each option fits all electrical and data points for that area, including
 ceiling fixtures. The ground-floor view includes the court and side passages.
-Whole house displays the floors side by side so neither hides the other.
+Whole house stacks the first floor above ground at its defined elevation.
+Choose **Separate floors** to inspect both levels side by side, and **Stack
+floors** to return to the real arrangement. The original-house roof and 1 m
+parapet can be hidden with **Roof & parapet** for upstairs interior inspection.
 
 Use **Top** for the full layout, **Orbit** to inspect mounting heights,
 **Point tags** to show drawing references, and **Expand model** for more space.
@@ -20,6 +23,10 @@ Coloured point markers remain visible through walls; the point list shows
 every electrical position included in the current view. Select a point to
 inspect it, then use **Selected room** or a placement tool to edit in detail.
 Plumbing-only provisions remain available in the room editor.
+
+Middle-button drag pans the camera; left drag orbits and the wheel zooms.
+**Pan** enables left-button or one-finger panning. **Fit view** recenters the
+current view. Camera movement does not move equipment or furniture.
 
 Floor separation changes only the display. Saved positions, physical routes,
 drawings and BOM quantities are unchanged.

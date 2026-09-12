@@ -1,16 +1,17 @@
-import {floorElevation,floorClearHeight,customRooms} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {isMountArea,mountSurface,areaSurfaces,clampMount,mountPosition,faceOrientation} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
+import {structureGeometry,roofFootprints} from './structure.js?v=20260913-structure-navigation-1';
+import {floorElevation,floorClearHeight,customRooms} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {isMountArea,mountSurface,areaSurfaces,clampMount,mountPosition,faceOrientation} from './mount-surfaces.js?v=20260913-structure-navigation-1';
 import * as THREE from './vendor/three.module.js';
-import {floorOffset,displayPosition} from './view-layout.js?v=20260913-outdoor-projects-2';
+import {floorOffset,displayPosition} from './view-layout.js?v=20260913-structure-navigation-1';
 import {OrbitControls} from './vendor/OrbitControls.js';
-import {meta,rooms,walls,windows} from './data.js?v=20260913-outdoor-projects-2';
-import {fixture} from './fixtures3d.js?v=20260913-outdoor-projects-2';
-import {furnitureCatalog,resolvedFurniture,fitFurniture} from './furniture-data.js?v=20260913-outdoor-projects-2';
-import {modelInstance,ensureModelAssets} from './model-assets.js?v=20260913-outdoor-projects-2';
-import {compoundSettings} from './compound.js?v=20260913-outdoor-projects-2';
+import {meta,rooms,walls,windows} from './data.js?v=20260913-structure-navigation-1';
+import {fixture} from './fixtures3d.js?v=20260913-structure-navigation-1';
+import {furnitureCatalog,resolvedFurniture,fitFurniture} from './furniture-data.js?v=20260913-structure-navigation-1';
+import {modelInstance,ensureModelAssets} from './model-assets.js?v=20260913-structure-navigation-1';
+import {compoundSettings} from './compound.js?v=20260913-structure-navigation-1';
 let renderer,scene,camera,controls,root,host,ro,onSelect,ray=new THREE.Raycaster(),pointer=new THREE.Vector2(),floorObjects=[],lastOptions;
 const materials=new Map();let serviceRoot,serviceMeshes=[],servicePick,placement;let activePalette=null;
-let houseObjects=[];let serviceState, surfaceMeshes=[], editor={mode:'select'}, dragging=null;
+let houseObjects=[];let serviceState, surfaceMeshes=[], editor={mode:'select'}, dragging=null,navigationMode='orbit';
 let furnitureRoot,furnitureNodes=[],furnitureSelection,furnitureLayoutKey;
 const palettes={ivory:{wall:'#e9e4d9',floor:'#d2cabb',wood:'#b69b74',accent:'#666e63'},graphite:{wall:'#dfddd5',floor:'#a9aaa4',wood:'#806246',accent:'#343f3d'},sand:{wall:'#e3d6c2',floor:'#c6b396',wood:'#8e7051',accent:'#aaa28d'}};
 const textures=new Map();function texture(kind){if(textures.has(kind))return textures.get(kind);const c=document.createElement('canvas');c.width=c.height=256;const cx=c.getContext('2d');cx.fillStyle=kind==='wood'?'#fff3dc':'#fff';cx.fillRect(0,0,256,256);let seed=43;const rnd=()=>{seed=(seed*16807)%2147483647;return seed/2147483647};for(let i=0;i<4000;i++){const a=rnd()*.10;cx.fillStyle=`rgba(60,48,34,${a})`;if(kind==='wood')cx.fillRect(rnd()*256,0,.2+rnd(),256);else cx.fillRect(rnd()*256,rnd()*256,1+rnd()*2,1+rnd()*2)}if(kind==='stone'){cx.strokeStyle='#b5b3aa';cx.lineWidth=1;cx.strokeRect(0,0,256,256)}const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;textures.set(kind,t);return t;}
@@ -68,7 +69,10 @@ function buildFloor(f,o,base){const g=new THREE.Group();root.add(g);g.position.x
  if(f===1){ // diagrammatic terrace and balcony guards; dimensions require code review
   for(const seg of [[0,0,8.6,0],[8.6,0,8.6,5.7],[0,0,0,proposed?2.4:4.1]]){const [x1,z1,x2,z2]=seg;const len=Math.hypot(x2-x1,z2-z1);let m=box(g,(x1+x2)/2,base+.50,(z1+z2)/2,len,1,.12,proposed?'#e3dfd3':'#a5a79e');m.rotation.y=-Math.atan2(z2-z1,x2-x1);}if(proposed)box(g,2.2,base+.55,12.85,4.4,1.1,.08,'#677b71',{transparent:true,opacity:.65});
  }
- if(!cut&&o.roof&&f===1){const rz=proposed?2.35:4.08;shapeSlab(g,[[0,rz],[3.45,rz],[3.45,5.70],[8.6,5.70],[8.6,12.88],[0,12.88]],base+o.heights[1]-.03,.16,proposed?'#cdcfc6':'#a9ada7');if(proposed)shapeSlab(g,[[4.45,3.7],[6.42,3.7],[6.42,5.75],[4.45,5.75]],base+o.heights[1]-.03,.16,'#cccac5');}
+ const structure=structureGeometry(o.structure,o.heights,proposed);
+ const structuralWall=(seg,color)=>{const [x1,z1]=seg.start,[x2,z2]=seg.end,len=Math.hypot(x2-x1,z2-z1);const mesh=box(g,(x1+x2)/2,base+seg.bottom+seg.height/2,(z1+z2)/2,len+seg.thickness,seg.height,seg.thickness,color);mesh.rotation.y=-Math.atan2(z2-z1,x2-x1);};
+ if(f===0&&(!cut||h>=o.heights[0]-.16))for(const seg of structure.band)structuralWall(seg,proposed?'#b9b8ad':'#a3a69d');
+ if(!cut&&o.roof&&f===1){for(const outline of roofFootprints(proposed))shapeSlab(g,outline,base+o.heights[1],.16,proposed?'#cdcfc6':'#a9ada7');for(const seg of structure.parapet)structuralWall(seg,wallColor);}
  if(!cut){box(g,4.3,base+o.heights[f]-.15,13.05,9.12,.16,.70,proposed?'#dfdfd5':'#96998e');box(g,2.25,base+o.heights[f]-.38,12.78,4.65,.28,.22,wallColor);for(const xx of [1.5,2.12,2.74,3.36,3.98,5.4,6.02,6.64])box(g,xx,base+o.heights[f]-.34,12.97,.14,.28,.42,proposed?'#cbcbbf':'#96998e');}if(!cut){ // openings and front porch columns from plan footprint; vertical sizes provisional
   box(g,4.40,base+1.06,10.85,.86,2.12,.10,'#705237');
   for(const xx of [.10,3.25])box(g,xx,base+h/2,12.72,.23,h,.23,wallColor);
@@ -79,7 +83,7 @@ function buildFloor(f,o,base){const g=new THREE.Group();root.add(g);g.position.x
 export function init(container,select){if(renderer)return;host=container;onSelect=select;scene=new THREE.Scene();scene.background=new THREE.Color('#e7edef');camera=new THREE.PerspectiveCamera(43,1,.05,200);renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.localClippingEnabled=true;renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.85;renderer.setClearColor('#e7edef');host.appendChild(renderer.domElement);renderer.domElement.setAttribute('aria-label','Navigable 3D house model');renderer.domElement.tabIndex=0;
  scene.add(new THREE.HemisphereLight('#fff7e6','#78969a',2.6));const sun=new THREE.DirectionalLight('#fff5df',3);sun.position.set(-8,18,15);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:.1,far:70});sun.shadow.bias=-.001;scene.add(sun);box(scene,4.3,-.25,6.4,32,.12,36,'#dce2dc');const grid=new THREE.GridHelper(30,30,'#b5c4c3','#cbd5d2');grid.position.set(4.3,-.18,6.4);scene.add(grid);
  controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=2;controls.maxDistance=40;controls.maxPolarAngle=Math.PI*.49;controls.target.set(4.3,1.4,6.4);controls.keys={LEFT:'ArrowLeft',UP:'ArrowUp',RIGHT:'ArrowRight',BOTTOM:'ArrowDown'};controls.listenToKeyEvents(renderer.domElement);ro=new ResizeObserver(resize);ro.observe(host);renderer.setAnimationLoop(()=>{if(!host.hidden){controls.update();renderer.render(scene,camera)}});
- installEditorPointer(renderer.domElement);resize();}
+ setNavigation();installEditorPointer(renderer.domElement);resize();}
 function resize(){if(!host||!host.clientWidth||!host.clientHeight)return;renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();}
 export function rebuild(o){lastOptions=o;activePalette=palettes[o.palette||'ivory'];if(root){scene.remove(root);root.traverse(n=>{if(n.geometry&&!n.geometry.userData?.customAsset)n.geometry.dispose();if(n.userData?.houseReference){for(const m of [].concat(n.material||[]))m.dispose();}if(!n.userData?.houseReference&&n.material?.map&&![...textures.values()].includes(n.material.map)){n.material.map.dispose();n.material.dispose()}})}root=new THREE.Group();scene.add(root);floorObjects=[];houseObjects=[];if(o.houseModel){buildHouseReference(o);updateFurniture({},null,true);resize();return;}if(o.scope==='all'){buildFloor(0,o,0);buildFloor(1,o,floorOffset(1,o)[1])}else buildFloor(+o.floor,o,0);if((o.view==='exterior'||o.siteContext)&&o.compound&&o.scheme==='proposed')buildCompound(o);updateFurniture(o.furnitureLayout||{},null,true);resize();}
 export function electricalOverview(mode='top',angle=0){
@@ -88,7 +92,8 @@ export function electricalOverview(mode='top',angle=0){
  const center=bounds.getCenter(new THREE.Vector3()),radius=bounds.getSize(new THREE.Vector3()).length()/2;
  const vfov=THREE.MathUtils.degToRad(camera.fov),hfov=2*Math.atan(Math.tan(vfov/2)*camera.aspect);
  const distance=radius/Math.sin(Math.min(vfov,hfov)/2)*1.05;
- const direction=mode==='top'?new THREE.Vector3(0,1,.0001):new THREE.Vector3(Math.sin(angle)*.45,1,Math.cos(angle)*.55).normalize();
+ const stacked=lastOptions.scope==='all'&&lastOptions.floorLayout!=='side-by-side';
+ const direction=mode==='top'?new THREE.Vector3(0,1,.0001):new THREE.Vector3(Math.sin(angle)*(stacked?1:.45),stacked?.65:1,Math.cos(angle)*(stacked?1.2:.55)).normalize();
  controls.minDistance=2;controls.maxDistance=Math.max(100,distance*2);controls.maxPolarAngle=Math.PI*.49;
  controls.target.copy(center);camera.position.copy(center).addScaledVector(direction,distance);controls.update();
 }
@@ -103,7 +108,16 @@ export function roomView(r,surface='orbit',angle=0){if(r.kind==='custom')return 
  else if(surface==='ceiling'){controls.target.set(x+w/2,base+2.84,z+d/2);camera.position.set(x+w/2,base+1.10,z+d/2+.001)}
  else {const targets={A:[x+w/2,base+1.5,z+.04],B:[x+w-.04,base+1.5,z+d/2],C:[x+w/2,base+1.5,z+d-.04],D:[x+.04,base+1.5,z+d/2]};controls.target.set(...targets[surface]);camera.position.set(x+w/2,base+1.5,z+d/2);if(surface==='A')camera.position.z=z+d-.12;if(surface==='C')camera.position.z=z+.12;if(surface==='B')camera.position.x=x+.12;if(surface==='D')camera.position.x=x+w-.12;}controls.update();}
 export function setPlacement(r,surface,fn){if(!fn){placement=null;return;}placement={plane:planeFor(r,surface),fn:pt=>fn(roomCoords(r,pt,surface))};}
-export function setInteraction(mode,callbacks={}){editor={mode,...callbacks};if(renderer)renderer.domElement.style.cursor=['move','furniture'].includes(mode)?'grab':mode==='surface'?'crosshair':'default';}
+export function setInteraction(mode,callbacks={}){editor={mode,...callbacks};updateCursor();}
+function updateCursor(){if(renderer)renderer.domElement.style.cursor=navigationMode==='pan'||['move','furniture'].includes(editor.mode)?'grab':editor.mode==='surface'?'crosshair':'default';}
+export function setNavigation(mode='orbit'){
+ navigationMode=mode==='pan'?'pan':'orbit';if(!controls)return;
+ controls.enablePan=true;controls.screenSpacePanning=true;
+ controls.mouseButtons.LEFT=navigationMode==='pan'?THREE.MOUSE.PAN:THREE.MOUSE.ROTATE;
+ controls.mouseButtons.MIDDLE=THREE.MOUSE.PAN;controls.mouseButtons.RIGHT=THREE.MOUSE.PAN;
+ controls.touches.ONE=navigationMode==='pan'?THREE.TOUCH.PAN:THREE.TOUCH.ROTATE;
+ controls.touches.TWO=THREE.TOUCH.DOLLY_PAN;updateCursor();
+}
 export function updateFurniture(layout={},selected=null,force=false){
  if(!scene||!lastOptions)return;lastOptions.furnitureLayout=layout;
  const key=JSON.stringify([layout,lastOptions.scope,lastOptions.floor,lastOptions.floorLayout,lastOptions.floorOffsets,lastOptions.heights,lastOptions.explode,lastOptions.furniture,lastOptions.houseModel?.assetId,lastOptions.scheme,lastOptions.palette]);
@@ -139,6 +153,8 @@ function roomCoords(r,pt,surface,anchor=serviceState?.opts.activeAnchor){if(r.ki
 }
 function installEditorPointer(canvas){let start;
  canvas.addEventListener('pointerdown',e=>{start=[e.clientX,e.clientY];
+  if(e.button===1)e.preventDefault();
+  if(navigationMode==='pan'||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey)return;
   if(editor.mode==='furniture'&&e.button===0){aim(e);const node=furnitureHit();if(!node)return;
    const item=node.userData.item,room=rooms.flat().find(r=>r.id===item.roomId),floor=room.id.startsWith('f-')?1:0,offset=floorOffset(floor,lastOptions),plane=new THREE.Plane(new THREE.Vector3(0,1,0),-offset[1]),hit=new THREE.Vector3();
    if(!ray.ray.intersectPlane(plane,hit))return;
@@ -156,9 +172,9 @@ function installEditorPointer(canvas){let start;
    e.stopImmediatePropagation();return;
   }
   const c=roomCoords(d.room,pt,d.surface,d.anchor),[x,z]=xyz(d.room.floor,d.room.rect[0],d.room.rect[1]);d.coords=c;if(isMountArea(d.room.id))d.node.position.set(...displayPosition(mountPosition(c,serviceState.opts.project),d.room.floor,lastOptions));else d.node.position.set(x+c.u,(lastOptions.scope==='all'?d.room.floor*3:0)+c.height,z+c.v);e.stopImmediatePropagation();},true);
- canvas.addEventListener('pointercancel',()=>{if(dragging){dragging.node.position.copy(dragging.original);if(furnitureSelection&&dragging.kind==='furniture')furnitureSelection.box.setFromObject(dragging.node);}dragging=null;controls.enabled=true;canvas.style.cursor=['move','furniture'].includes(editor.mode)?'grab':'default';});
+ canvas.addEventListener('pointercancel',()=>{if(dragging){dragging.node.position.copy(dragging.original);if(furnitureSelection&&dragging.kind==='furniture')furnitureSelection.box.setFromObject(dragging.node);}dragging=null;controls.enabled=true;updateCursor();});
  canvas.addEventListener('pointerup',e=>{if(dragging){const d=dragging;dragging=null;controls.enabled=true;canvas.style.cursor='grab';if(canvas.hasPointerCapture(e.pointerId))canvas.releasePointerCapture(e.pointerId);e.stopImmediatePropagation();if(d.kind==='furniture'){if(d.coords)editor.onFurnitureMove?.(d.id,d.coords);else editor.onFurniturePick?.(d.id);}else if(d.coords)editor.onMove?.(d.id,d.coords);else servicePick?.(d.id);return;}
-  if(!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>5)return;aim(e);
+  if(navigationMode==='pan'||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||!start||Math.hypot(e.clientX-start[0],e.clientY-start[1])>5)return;aim(e);
   if(placement){const pt=new THREE.Vector3();if(ray.ray.intersectPlane(placement.plane,pt))placement.fn(pt);return;}
   if(editor.mode==='surface'&&lastOptions.houseModel){const room=serviceState.opts.room,offset=floorOffset(room.floor,lastOptions),h=ray.intersectObjects(houseObjects,true).find(h=>h.point.y>=offset[1]-.03&&h.point.y<=offset[1]+floorClearHeight(serviceState.opts.project,room.floor)+.03);if(h){const n=h.face.normal.clone().transformDirection(h.object.matrixWorld).normalize();if(n.dot(ray.ray.direction)>0)n.negate();const [x,z]=xyz(room.floor,room.rect[0],room.rect[1]);editor.onSurface?.({surface:'mesh',normal:n.toArray(),u:h.point.x-x-offset[0],v:h.point.z-z-offset[2],height:h.point.y-offset[1]});return;}}
   if(editor.mode==='surface'){const h=ray.intersectObjects(surfaceMeshes)[0];if(h)editor.onSurface?.(roomCoords(serviceState.opts.room,h.point,h.object.userData.surface));return;}

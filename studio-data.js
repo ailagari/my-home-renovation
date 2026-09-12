@@ -1,9 +1,9 @@
-import {customRooms,floorElevation,floorClearHeight} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {mountingAreas,isMountArea,clampMount,mountPosition} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
-import {rooms,meta} from './data.js?v=20260913-outdoor-projects-2';
-import {allElectrical} from './room-electrical.js?v=20260913-outdoor-projects-2';
-import {ensureDesign} from './electrical-engine.js?v=20260913-outdoor-projects-2';
-export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js?v=20260913-outdoor-projects-2';
+import {customRooms,floorElevation,floorClearHeight} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {mountingAreas,isMountArea,clampMount,mountPosition} from './mount-surfaces.js?v=20260913-structure-navigation-1';
+import {rooms,meta} from './data.js?v=20260913-structure-navigation-1';
+import {allElectrical} from './room-electrical.js?v=20260913-structure-navigation-1';
+import {ensureDesign} from './electrical-engine.js?v=20260913-structure-navigation-1';
+export {calculate,ensureDesign,syncSources,isBoard,isSource,isSwitch,isLoad,setConnection,connectionError,removePoint} from './electrical-engine.js?v=20260913-structure-navigation-1';
 export const library=[
  ['model','Imported furniture / decor','Models',0,'floor',.02,'model'],
  ['socket16','16A socket','Power',0,'B',.45,'dedicated'],['socket13','13A socket','Power',0,'B',.45,'general'],['appliance16','16A appliance','Appliances',2000,'B',.65,'dedicated'],['appliance13','13A appliance','Appliances',1000,'B',.65,'dedicated'],

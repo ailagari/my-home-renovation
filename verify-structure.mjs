@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {structureSettings,structureGeometry,roofFootprints} from './structure.js';
+const settings=structureSettings(),g=structureGeometry(settings);
+assert.equal(settings.parapetHeight,1);
+assert.equal(g.band.length,4);
+assert.ok(g.band.every(s=>Math.abs(s.bottom+s.height-2.84)<1e-9),'Band meets the underside of the first-floor slab');
+for(let i=0;i<g.band.length;i++)assert.deepEqual(g.band[i].end,g.band[(i+1)%g.band.length].start,'Band runs around all four sides');
+assert.ok(g.parapet.every(s=>s.bottom===3&&s.height===1),'Roof parapet is 1 m above roof, relative to the first floor');
+assert.equal(3+g.parapet[0].bottom+g.parapet[0].height,7,'Whole-house parapet top is 7 m above ground');
+assert.equal(roofFootprints(false).length,1,'Existing view omits the unbuilt laundry roof');
+assert.equal(structureGeometry({band:false,parapet:false}).band.length,0);
+assert.equal(structureGeometry({band:false,parapet:false}).parapet.length,0);
+assert.equal(structureGeometry({bandDepth:.35},[3.3,3]).band[0].bottom,3.3-.16-.35);
+assert.throws(()=>structureSettings({bandDepth:-1}));
+assert.throws(()=>structureSettings({parapetHeight:NaN}));
+console.log('PASS: four-sided slab band, roof-only 1 m parapet, existing/proposed outlines and editable dimension validation.');

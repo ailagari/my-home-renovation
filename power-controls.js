@@ -1,4 +1,4 @@
-import {byType,roomById,isBoard,isLoad,isSwitch,connectionError} from './studio-data.js?v=20260913-outdoor-projects-2';
+import {byType,roomById,isBoard,isLoad,isSwitch,connectionError} from './studio-data.js?v=20260913-structure-navigation-1';
 
 export const emergencyEligible=p=>!!p&&!isBoard(p)&&!['plumbing','data','speaker','avpath','reserve','model','poe'].includes(byType[p.type]?.group)&&(p.watts>0||isLoad(p)||p.type==='rack');
 export function emergencyGroup(project,id){

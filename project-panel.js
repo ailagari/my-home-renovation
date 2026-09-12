@@ -1,7 +1,7 @@
-import {listProjects,loadProject,archiveProject} from './project-store.js?v=20260913-outdoor-projects-2';
-import {importModelFiles,validateModelReference} from './model-assets.js?v=20260913-outdoor-projects-2';
-import {validateLevels,validateHouseModel,houseBounds} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {esc} from './electrical-report.js?v=20260913-outdoor-projects-2';
+import {listProjects,loadProject,archiveProject} from './project-store.js?v=20260913-structure-navigation-1';
+import {importModelFiles,validateModelReference} from './model-assets.js?v=20260913-structure-navigation-1';
+import {validateLevels,validateHouseModel,houseBounds} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {esc} from './electrical-report.js?v=20260913-structure-navigation-1';
 export function projectPanel(host,project,hooks){
  let saved=[];try{saved=listProjects(true);}catch(e){hooks.toast(e.message);}
  const model=project.houseModel,bounds=model?houseBounds(model):null;

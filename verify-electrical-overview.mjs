@@ -17,9 +17,14 @@ assert.equal(new Set([...shown('ground'),...shown('first')].map(p=>p.id)).size,s
 
 const whole=coverageOptions('all',0),upper=shown('first').find(p=>p.type==='projector'),lower=shown('ground').find(p=>p.type==='ac');
 const upperActual=worldPoint(upper),upperDisplay=displayPosition(upperActual,1,whole);
-assert.equal(upperDisplay[0]-upperActual[0],13);
-assert.equal(upperDisplay[1],upper.height);
-assert.equal(upperDisplay[2],upperActual[2]);
+assert.deepEqual(upperDisplay,upperActual,'Whole house keeps the first floor above ground at its actual elevation');
+assert.deepEqual(floorOffset(1,whole),[0,3,0]);
+const separated=coverageOptions('all',0,'side-by-side');
+assert.deepEqual(displayPosition(upperActual,1,separated),[upperActual[0]+13,upper.height,upperActual[2]]);
+const customLevels=[{elevation:0},{elevation:3.6}],customOptions={...whole,levels:customLevels};
+assert.deepEqual(floorOffset(1,customOptions),[0,3.6,0]);
+assert.deepEqual(displayPosition([2,4.8,7],1,customOptions),[2,4.8,7]);
+assert.deepEqual(floorOffset(1,{...separated,houseModel:{dimensions:[8,6,10],scale:1,angle:90}}),[14,0,0]);
 assert.deepEqual(displayPosition(worldPoint(lower),0,whole),worldPoint(lower));
 assert.deepEqual(displayPosition(upperActual,1,coverageOptions('first',0)),[upperActual[0],upper.height,upperActual[2]]);
 assert.deepEqual(floorOffset(1,{scope:'all',view:'cutaway',explode:true,heights:[3,3]}),[0,5.5,0]);
@@ -27,4 +32,4 @@ assert.deepEqual(floorOffset(1,{scope:'all',view:'exterior',explode:true,heights
 assert.deepEqual(displayPosition(upperActual,1,{scope:'all',floorOffsets:[0,5.5]}),[upperActual[0],upper.height+5.5,upperActual[2]]);
 assert.equal(JSON.stringify(project),before,'Changing presentation must never move saved equipment');
 assert.equal(JSON.stringify(calculate(project)),quantities,'Presentation separation must never inflate route lengths or BOM');
-console.log('PASS: full-floor/house coverage, ceiling and outdoor points, separate floor display, existing exploded view and unchanged design/quantities.');
+console.log('PASS: full-floor/house coverage, stacked real floor elevations, optional separate floors, custom levels, existing exploded view and unchanged design/quantities.');

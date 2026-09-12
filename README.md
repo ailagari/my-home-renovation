@@ -35,6 +35,13 @@ as lintels remain visible when they exist in the supplied file. Two electrical
 floors are supported. See [OUTDOOR_PROJECTS.md](OUTDOOR_PROJECTS.md) for the
 workflow, portable backups and model limits.
 
+**Whole house** stacks the first floor above ground at its defined elevation.
+Use **Separate floors** for inspection. Hold the middle mouse button and drag
+to pan, or use **Pan**; the wheel zooms and **Fit view** recenters the camera.
+The original-house model includes a four-sided band below the first-floor slab
+and a 1 m roof parapet. Band depth and thicknesses remain editable provisional
+dimensions. **Roof & parapet** hides the roof for upstairs interior inspection.
+
 Open the [live design studio](https://ailagari.github.io/my-home-renovation/studio.html).
 
 Open `index.html` through a web server for the review, or `studio.html` for
@@ -65,12 +72,14 @@ sources and incompatible supply arrangements are flagged in the outputs.
 ## Verification
 
 Run `node verify-studio.mjs`, `node verify-electrical-overview.mjs`,
-`node verify-layout-tools.mjs` and `node verify-outdoor-projects.mjs`
+`node verify-layout-tools.mjs`, `node verify-outdoor-projects.mjs` and
+`node verify-structure.mjs`
 to check source routing, phase assignment,
 network runs, switch links, estimates, migration, generated schedules,
 floor-overview coverage, furniture transforms, compound quantities and model
 parsing, exterior mounting, emergency control groups, custom floor levels and
-independent project storage. Generated cube models for these checks are
+independent project storage, stacked floor elevations, slab-band continuity and
+roof parapet dimensions. Generated cube models for these checks are
 included in `test-fixtures`.
 
 ## Maintenance

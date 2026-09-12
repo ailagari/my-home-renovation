@@ -1,6 +1,6 @@
-import {floorElevation,floorClearHeight,houseBounds} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {mountWarnings} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
-import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint,configureRooms} from './studio-data.js?v=20260913-outdoor-projects-2';
+import {floorElevation,floorClearHeight,houseBounds} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {mountWarnings} from './mount-surfaces.js?v=20260913-structure-navigation-1';
+import {byType,roomById,allRooms,origin,worldPoint,makePoint,clampPoint,configureRooms} from './studio-data.js?v=20260913-structure-navigation-1';
 
 export const isBoard=p=>['db1p','db3p'].includes(p?.type);
 export const isSource=p=>isBoard(p)||p?.type==='rack';

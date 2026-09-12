@@ -1,5 +1,5 @@
-import {meta,walls,windows} from './data.js?v=20260913-outdoor-projects-2';
-import {compoundSettings} from './compound.js?v=20260913-outdoor-projects-2';
+import {meta,walls,windows} from './data.js?v=20260913-structure-navigation-1';
+import {compoundSettings} from './compound.js?v=20260913-structure-navigation-1';
 
 // Extra editing areas describe existing faces, not new floor area or rooms.
 export const mountingAreas=[['g-exterior','Exterior house walls',0],['f-exterior','Exterior house walls',1],['g-compound','Compound walls',0]].map(([id,name,floor])=>({id,name,floor,kind:'mount',dim:[8.6,12.85],rect:[...meta.origin[floor],8.6*74,12.85*74]}));

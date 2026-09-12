@@ -1,6 +1,6 @@
-import {allRooms,roomById,byType,isSwitch,isLoad} from './studio-data.js?v=20260913-outdoor-projects-2';
-import {emergencyEligible,emergencyGroup,emergencyWatts,setEmergency,switchChoice,assignSwitchLoads} from './power-controls.js?v=20260913-outdoor-projects-2';
-import {esc} from './electrical-report.js?v=20260913-outdoor-projects-2';
+import {allRooms,roomById,byType,isSwitch,isLoad} from './studio-data.js?v=20260913-structure-navigation-1';
+import {emergencyEligible,emergencyGroup,emergencyWatts,setEmergency,switchChoice,assignSwitchLoads} from './power-controls.js?v=20260913-structure-navigation-1';
+import {esc} from './electrical-report.js?v=20260913-structure-navigation-1';
 let mode='emergency',query='',floor='all',switchId='',loadRoom='all';
 const kw=w=>(w/1000).toFixed(3)+' kW';
 export function powerPanel(host,project,stats,hooks){

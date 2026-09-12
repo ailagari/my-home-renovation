@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import {defaultProject,allRooms,roomById,configureRooms,calculate,makePoint,clampPoint,worldPoint,setConnection} from './studio-data.js?v=20260913-outdoor-projects-2';
-import {areaSurfaces,mountSurface,mountPosition,mountWarnings} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
-import {setEmergency,emergencyGroup,emergencyWatts,assignSwitchLoads,switchChoice} from './power-controls.js?v=20260913-outdoor-projects-2';
-import {drawing,pointRows,pointHeaders,engineerPack} from './electrical-report.js?v=20260913-outdoor-projects-2';
-import {floorElevation,houseBounds,validateLevels,validateHouseModel} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {saveProject,loadProject,listProjects} from './project-store.js?v=20260913-outdoor-projects-2';
+import {defaultProject,allRooms,roomById,configureRooms,calculate,makePoint,clampPoint,worldPoint,setConnection} from './studio-data.js?v=20260913-structure-navigation-1';
+import {areaSurfaces,mountSurface,mountPosition,mountWarnings} from './mount-surfaces.js?v=20260913-structure-navigation-1';
+import {setEmergency,emergencyGroup,emergencyWatts,assignSwitchLoads,switchChoice} from './power-controls.js?v=20260913-structure-navigation-1';
+import {drawing,pointRows,pointHeaders,engineerPack} from './electrical-report.js?v=20260913-structure-navigation-1';
+import {floorElevation,houseBounds,validateLevels,validateHouseModel} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {saveProject,loadProject,listProjects} from './project-store.js?v=20260913-structure-navigation-1';
 
 const p=defaultProject(),baseline=calculate(p).connectedLoad;
 assert.equal(areaSurfaces('g-exterior',p).length,9);assert.equal(areaSurfaces('f-exterior',p).length,13);assert.equal(areaSurfaces('g-compound',p).length,8);

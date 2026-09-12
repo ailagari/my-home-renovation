@@ -1,8 +1,27 @@
 # Exterior points, emergency equipment and house-model projects
 
 Open the [live design studio](https://ailagari.github.io/my-home-renovation/studio.html).
-This release adds exterior mounting surfaces, an emergency-equipment checklist,
-switch assignment and separate projects using imported house models.
+This release includes stacked floor views, pan controls, the slab band and roof
+parapet, alongside the exterior electrical tools and house-model projects.
+
+**Whole house** stacks the first
+floor above the ground floor at its defined elevation (3 m for the original
+house). **Separate floors** / **Stack floors** switches the inspection layout.
+Hold the middle mouse button and drag to pan; left drag orbits and the wheel
+zooms. **Pan** enables left-button or one-finger panning; **Fit view** recenters
+the camera.
+
+The model also includes the owner's four-sided band immediately below
+the first-floor slab, at the ground-floor ceiling, and a **1 m roof parapet**.
+The band is not placed at window-lintel height. Expand **Slab band & roof
+parapet** in the inspector to edit the saved dimensions. Band depth 0.25 m,
+band thickness 0.23 m and parapet thickness 0.15 m are provisional; the slab
+thickness remains the earlier provisional 0.16 m. With two 3 m floors, the
+roof is at 6 m and the parapet top at 7 m. The existing traced roof outlines
+govern its perimeter; an imported house supplies its own structural geometry.
+Use **Roof & parapet** in Whole house to hide the roof for interior inspection.
+These are visual references, with no structural clash check or structural BOM.
+Run `node verify-structure.mjs` to check band continuity and roof elevations.
 
 ## Exterior and compound walls
 
@@ -69,8 +88,8 @@ heights are editable. Each floor has an editing plane. Pick actual mesh faces
 for equipment, or choose the defined ceiling/floor plane. Add a DB on each
 floor and a rack before relying on the route estimates.
 
-**Full house model** shows the entire reference geometry at its real floor
-levels. **Separate floor views** returns to the electrical overview. Currently
+**Whole house** shows the entire reference geometry at its real floor levels.
+**Separate floors** opens the side-by-side electrical inspection view. Currently
 two electrical floors are supported; additional storeys are visible reference
 geometry. Rooms, lintels and structure are not automatically classified.
 Furniture inside a house file is part of that reference mesh, rather than an

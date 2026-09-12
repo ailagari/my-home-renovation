@@ -1,6 +1,6 @@
-import {floorElevation,floorClearHeight} from './project-geometry.js?v=20260913-outdoor-projects-2';
-import {isMountArea,mountingSurfaces,mountSurface,surfaceLabel} from './mount-surfaces.js?v=20260913-outdoor-projects-2';
-import {allRooms,roomById,byType,origin,worldPoint,isBoard,isSwitch} from './studio-data.js?v=20260913-outdoor-projects-2';
+import {floorElevation,floorClearHeight} from './project-geometry.js?v=20260913-structure-navigation-1';
+import {isMountArea,mountingSurfaces,mountSurface,surfaceLabel} from './mount-surfaces.js?v=20260913-structure-navigation-1';
+import {allRooms,roomById,byType,origin,worldPoint,isBoard,isSwitch} from './studio-data.js?v=20260913-structure-navigation-1';
 export const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const tag=(p,id)=>p.points.find(q=>q.id===id)?.tag||'UNASSIGNED';
 const name=(p,id)=>p.points.find(q=>q.id===id)?.label||'No source';
